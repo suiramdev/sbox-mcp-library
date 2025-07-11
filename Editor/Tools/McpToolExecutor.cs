@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Editor;
 using Sandbox;
@@ -236,6 +237,43 @@ public static class McpToolExecutor
 		}
 
 		return parameterValues;
+	}
+
+	[McpEditorTool]
+	public static JsonObject GetAvailableTools()
+	{
+		var tools = new JsonArray();
+		
+		foreach ( var kvp in _toolMethods )
+		{
+			var method = kvp.Value;
+			var attribute = method.GetCustomAttribute<McpEditorToolAttribute>();
+			
+			var parameters = new JsonArray();
+			foreach ( var param in method.GetParameters() )
+			{
+				parameters.Add( new JsonObject
+				{
+					["name"] = param.Name,
+					["type"] = param.ParameterType.Name,
+					["hasDefault"] = param.HasDefaultValue,
+					["defaultValue"] = param.DefaultValue?.ToString()
+				} );
+			}
+			
+			tools.Add( new JsonObject
+			{
+				["name"] = kvp.Key,
+				["description"] = attribute?.Description ?? "No description",
+				["parameters"] = parameters
+			} );
+		}
+		
+		return new JsonObject
+		{
+			["tools"] = tools,
+			["count"] = tools.Count
+		};
 	}
 
 	private static object? ConvertJsonElement( JsonElement element, Type targetType )
