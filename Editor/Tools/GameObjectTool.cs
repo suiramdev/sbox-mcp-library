@@ -40,44 +40,22 @@ public class GameObjectTool
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetAllGameObjects( string? sceneId = null )
+	public static JsonArray GetAllGameObjects( string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
 		var gameObjects = scene.GetAllObjects( false );
-		
-		// Create a proper JSON array instead of merging serialized objects
-		var jsonArray = new JsonArray();
-		
-		foreach ( var gameObject in gameObjects )
-		{
-			try
-			{
-				jsonArray.Add( gameObject.Serialize() );
-			}
-			catch ( Exception ex )
-			{
-				// Log the error but continue with other objects
-				Log.Warning( $"Failed to serialize GameObject {gameObject.Name} ({gameObject.Id}): {ex.Message}" );
-			}
-		}
-		
-		return new JsonObject
-		{
-			["gameObjects"] = jsonArray,
-			["count"] = gameObjects.Count()
-		};
+
+		return new JsonArray( gameObjects.Select( go => go.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
 	public static JsonObject CreateGameObject( string name, string sceneId, string? parentId = null )
 	{
-		// Always use the provided sceneId - this fixes the "Invalid scene ID format" error
 		var scene = GetSceneOrActive( sceneId );
 
 		GameObject? parent = null;
 		if ( parentId != null )
 		{
-			// Validate and parse parent GUID
 			if ( !Guid.TryParse( parentId, out Guid parsedParentId ) )
 			{
 				throw new InvalidOperationException( $"Invalid parent ID format: {parentId}" );
@@ -87,10 +65,7 @@ public class GameObjectTool
 
 		var gameObject = scene.CreateObject();
 		gameObject.Name = name;
-		if ( parent != null )
-		{
-			gameObject.SetParent( parent );
-		}
+		gameObject.SetParent( parent );
 
 		return gameObject.Serialize();
 	}
@@ -221,33 +196,12 @@ public class GameObjectTool
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetGameObjectChildren( string id, string? sceneId = null )
+	public static JsonArray GetGameObjectChildren( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
-
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
-		// Create a proper JSON array instead of merging serialized objects
-		var childrenArray = new JsonArray();
-		
-		foreach ( var child in gameObject.Children )
-		{
-			try
-			{
-				childrenArray.Add( child.Serialize() );
-			}
-			catch ( Exception ex )
-			{
-				// Log the error but continue with other children
-				Log.Warning( $"Failed to serialize child GameObject {child.Name} ({child.Id}): {ex.Message}" );
-			}
-		}
-		
-		return new JsonObject
-		{
-			["children"] = childrenArray,
-			["count"] = childrenArray.Count
-		};
+		return new JsonArray( gameObject.Children.Select( c => c.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
@@ -255,7 +209,12 @@ public class GameObjectTool
 	{
 		var scene = GetSceneOrActive( sceneId );
 
-		var gameObject = GetGameObjectById( new Guid( id ), scene );
+		if ( !Guid.TryParse( id, out Guid parsedId ) )
+		{
+			throw new InvalidOperationException( $"Invalid ID format: {id}" );
+		}
+
+		var gameObject = GetGameObjectById( parsedId, scene );
 		if ( gameObject.Parent == null )
 		{
 			return new JsonObject( null );
@@ -298,12 +257,12 @@ public class GameObjectTool
 
 		// Try multiple component type resolution strategies
 		TypeDescription? typeDescription = null;
-		
+
 		// Strategy 1: Exact name match
 		typeDescription = TypeLibrary.GetTypes()
 			.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
 			.FirstOrDefault( t => t.Name == componentType );
-		
+
 		// Strategy 2: Try without namespace prefix
 		if ( typeDescription == null && componentType.Contains( '.' ) )
 		{
@@ -312,7 +271,7 @@ public class GameObjectTool
 				.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
 				.FirstOrDefault( t => t.Name == shortName || t.TargetType.Name == shortName );
 		}
-		
+
 		// Strategy 3: Try with Sandbox prefix
 		if ( typeDescription == null && !componentType.StartsWith( "Sandbox." ) )
 		{
@@ -323,20 +282,21 @@ public class GameObjectTool
 
 		if ( typeDescription == null )
 		{
-			// List available component types for debugging
 			var availableTypes = TypeLibrary.GetTypes()
 				.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
 				.Select( t => t.Name )
-				.Take( 10 )
 				.ToList();
-				
-			throw new InvalidOperationException( 
+
+			throw new InvalidOperationException(
 				$"Component type '{componentType}' not found. Available types include: {string.Join( ", ", availableTypes )}" );
 		}
 
 		var type = typeDescription.TargetType;
-		var addComponentMethod = typeof( GameObject ).GetMethod( "AddComponent", [typeof( bool )] ) 
-			?? throw new InvalidOperationException( "AddComponent method not found" );
+		var addComponentMethod = typeof( GameObject ).GetMethod( "AddComponent", [typeof( bool )] );
+		if ( addComponentMethod == null )
+		{
+			throw new InvalidOperationException( "AddComponent method not found" );
+		}
 
 		var genericMethod = addComponentMethod.MakeGenericMethod( type );
 		genericMethod.Invoke( gameObject, [true] );
@@ -352,13 +312,13 @@ public class GameObjectTool
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
 		// Try multiple component type matching strategies
-		var component = gameObject.Components.GetAll().FirstOrDefault( c => 
+		var component = gameObject.Components.GetAll().FirstOrDefault( c =>
 			c.GetType().Name == componentType ||
 			c.GetType().FullName == componentType ||
-			c.GetType().Name == componentType.Split('.').Last() ||
-			c.GetType().FullName?.EndsWith($".{componentType}") == true
+			c.GetType().Name == componentType.Split( '.' ).Last() ||
+			c.GetType().FullName?.EndsWith( $".{componentType}" ) == true
 		);
-		
+
 		if ( component == null )
 		{
 			throw new InvalidOperationException( $"Component '{componentType}' not found on GameObject '{gameObject.Name}'" );
@@ -370,33 +330,12 @@ public class GameObjectTool
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetGameObjectComponents( string id, string? sceneId = null )
+	public static JsonArray GetGameObjectComponents( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
-
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
-		// Create a proper JSON array instead of merging serialized objects
-		var componentsArray = new JsonArray();
-		
-		foreach ( var component in gameObject.Components.GetAll() )
-		{
-			try
-			{
-				componentsArray.Add( component.Serialize() );
-			}
-			catch ( Exception ex )
-			{
-				// Log the error but continue with other components
-				Log.Warning( $"Failed to serialize component {component.GetType().Name}: {ex.Message}" );
-			}
-		}
-		
-		return new JsonObject
-		{
-			["components"] = componentsArray,
-			["count"] = componentsArray.Count
-		};
+		return new JsonArray( gameObject.Components.GetAll().Select( c => c.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
@@ -452,9 +391,9 @@ public class GameObjectTool
 		}
 
 		// If not a GUID, try to match by scene name
-		var sceneByName = SceneEditorSession.All.FirstOrDefault( s => 
+		var sceneByName = SceneEditorSession.All.FirstOrDefault( s =>
 			s.Scene?.Name?.Equals( sceneId, StringComparison.OrdinalIgnoreCase ) == true )?.Scene;
-		
+
 		if ( sceneByName != null )
 			return sceneByName;
 
@@ -464,7 +403,12 @@ public class GameObjectTool
 
 	private static GameObject GetGameObjectById( Guid guid, Scene scene )
 	{
-		return scene.GetAllObjects( false ).FirstOrDefault( go => go.Id == guid )
-			?? throw new InvalidOperationException( $"GameObject with id {guid} not found" );
+		var gameObject = scene.GetAllObjects( false ).FirstOrDefault( go => go.Id == guid );
+		if ( gameObject == null )
+		{
+			throw new InvalidOperationException( $"GameObject with id {guid} not found" );
+		}
+
+		return gameObject;
 	}
 }

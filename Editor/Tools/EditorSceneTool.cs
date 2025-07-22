@@ -1,4 +1,5 @@
 using System;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
 using Editor;
@@ -38,13 +39,13 @@ public class EditorSceneTool
 			$"Assets/scenes/{System.IO.Path.GetFileName( path )}",
 			System.IO.Path.GetFileName( path ).Replace( ".scene", "" )
 		};
-		
+
 		SceneFile? sceneFile = null;
 		foreach ( string pathVariant in pathVariants )
 		{
 			try
 			{
-				if ( ResourceLibrary.TryGet( pathVariant, out sceneFile ) && sceneFile != null )
+				if ( ResourceLibrary.TryGet( pathVariant, out sceneFile ) )
 					break;
 			}
 			catch ( Exception ex )
@@ -52,7 +53,7 @@ public class EditorSceneTool
 				Log.Warning( $"Failed to load scene from path '{pathVariant}': {ex.Message}" );
 			}
 		}
-		
+
 		if ( sceneFile == null )
 		{
 			throw new InvalidOperationException( $"Scene file not found. Tried paths: {string.Join( ", ", pathVariants )}" );
@@ -81,33 +82,9 @@ public class EditorSceneTool
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetAllEditorSessions()
+	public static JsonArray GetAllEditorSessions()
 	{
-		var sessions = new JsonArray();
-		
-		foreach ( var session in SceneEditorSession.All )
-		{
-			try
-			{
-				sessions.Add( new JsonObject
-				{
-					["id"] = session.Scene?.Id.ToString(),
-					["name"] = session.Scene?.Name ?? "Unnamed Scene",
-					["isActive"] = session == SceneEditorSession.Active
-					// Note: IsDirty property not available on SceneEditorSession
-				} );
-			}
-			catch ( Exception ex )
-			{
-				Log.Warning( $"Failed to serialize editor session: {ex.Message}" );
-			}
-		}
-		
-		return new JsonObject
-		{
-			["sessions"] = sessions,
-			["count"] = sessions.Count
-		};
+		return new JsonArray( SceneEditorSession.All.Select( s => s.Scene.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
@@ -116,16 +93,9 @@ public class EditorSceneTool
 		var activeSession = SceneEditorSession.Active;
 		if ( activeSession?.Scene == null )
 		{
-			return new JsonObject { ["error"] = "No active editor session found" };
+			throw new InvalidOperationException( "No active editor session found" );
 		}
-		
-		return new JsonObject
-		{
-			["id"] = activeSession.Scene.Id.ToString(),
-			["name"] = activeSession.Scene.Name ?? "Unnamed Scene",
-			["isActive"] = true,
-			// Note: IsDirty property not available on SceneEditorSession
-			["scene"] = activeSession.Scene.Serialize()
-		};
+
+		return activeSession.Scene.Serialize();
 	}
 }
