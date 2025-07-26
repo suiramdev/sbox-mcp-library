@@ -32,67 +32,77 @@ AI Assistant ↔ MCP Server ↔ WebSocket ↔ s&box Editor
 
 ## Quick Start
 
-### 1. Build and Run the Server
+### Setting Up and Launching the MCP Server
 
-#### Using the Build Script (Recommended)
+> [!IMPORTANT]
+> At this time, the MCP Server cannot be installed through the Library Manager due to s&box security limitations.
+> As a result, we plan to split this project into two parts:
+> - An MCP Server with its own dedicated repository and release cycle.
+> - A separate s&box adapter library for communicating with the MCP Server.
 
-```powershell
-.\build.ps1 run
-```
+1. Clone the repository
 
-#### Manual Build
+    ```bash
+    git clone https://github.com/suiramdev/sbox-mcp-server.git
+    ```
 
-```bash
-cd Server
-dotnet build
-dotnet run
-```
+2. Build the MCP Server
 
-### 2. Configure Your AI Assistant
+    **Using the Build Script (Recommended):**
 
-Add the MCP server to your AI assistant configuration:
+    ```powershell
+    cd <project-root>
+    .\build.ps1 run
+    ```
 
-#### For Cursor Editor (mcp.json):
-```json
-{
-  "mcpServers": {
-    "sbox": {
-      "command": "cmd",
-      "type": "stdio",
-      "enable": true,
-      "args": [
-        "/c", 
-        "<path-to-your-project>\\Server\\bin\\win-x64\\SandboxModelContextProtocol.Server.exe"
-      ]
+    **Manual Build:**
+
+    ```bash
+    cd <project-root>/Server
+    dotnet build
+    dotnet run
+    ```
+
+3. Configure Your AI Assistant
+
+    Add the MCP server to your AI assistant configuration:
+
+    **For Cursor Editor (mcp.json):**
+
+    ```json
+    {
+      "mcpServers": {
+        "sbox": {
+          "command": "cmd",
+          "type": "stdio",
+          "enable": true,
+          "args": [
+            "/c", 
+            "<project-root>\\Server\\bin\\win-x64\\SandboxModelContextProtocol.Server.exe"
+          ]
+        }
+      }
     }
-  }
-}
-```
+    ```
 
-### 3. Connect from s&box
+### Installing and Running the Adapter in s&box
 
-1. Start the MCP server
-2. Open your s&box project in the editor
-3. Navigate to **MCP → Connect to MCP Server** in the menu bar
-4. You'll hear a success sound when connected and a success message in the console
+> [!NOTE]
+> To enable communication between the MCP Server and the s&box editor, you must install the library in your s&box project. Without it, the server will not be able to interact with the editor.
 
-## Available Tools
+1. Install the Library.
 
-### Component Management
+    Install the library from the **Asset Library** of your s&box project. [Find it on asset.party](https://sbox.game/sdv/modelcontextprotocol)
 
-| Tool                   | Description                                   | Parameters                                                       |
-| ---------------------- | --------------------------------------------- | ---------------------------------------------------------------- |
-| `CreateComponent`      | Creates a new component on a game object      | `componentType`, `gameObjectId`                                  |
-| `GetComponents`        | Gets all components attached to a game object | `gameObjectId`                                                   |
-| `GetComponent`         | Gets a specific component by type             | `componentType`, `gameObjectId`                                  |
-| `RemoveComponent`      | Removes a component from a game object        | `componentType`, `gameObjectId`                                  |
-| `SetComponentProperty` | Sets a property value on a component          | `componentType`, `propertyName`, `propertyValue`, `gameObjectId` |
+2. Navigate to **MCP → Connect to MCP Server** in the menu bar.
 
-### Game Object Management
+3. You'll hear a success sound when connected and a success message in the console.
 
-| Tool                    | Description                             | Parameters |
-| ----------------------- | --------------------------------------- | ---------- |
-| `FindGameObjectsByName` | Finds game objects by name in the scene | `name`     |
+## Troubleshooting
+
+If the MCP Server isn't running, attempting to connect using the **Connect to MCP Server** button in the menu bar will fail.
+
+You can manually test the MCP Server by sending requests using [Postman](https://www.postman.com/downloads/) or any similar API client.
 
 ## Example AI Conversations
 
@@ -137,25 +147,6 @@ The included PowerShell build script (`build.ps1`) provides comprehensive build 
 | `.\build.ps1 rebuild`     | Full clean rebuild                    |
 | `.\build.ps1 test`        | Run unit tests                        |
 | `.\build.ps1 help`        | Show all available options            |
-
-## Development
-
-### Project Structure
-
-```
-modelcontextprotocol/
-├── Server/                 # MCP Server implementation
-│   ├── Tools/             # MCP tool definitions
-│   ├── Services/          # Core services (WebSocket, Commands)
-│   ├── Models/            # Data models
-│   └── Program.cs         # Entry point
-├── Editor/                # s&box Editor integration
-│   ├── Commands/          # Command handlers
-│   ├── Services/          # Editor services
-│   └── EditorMenu.cs      # Menu integration
-├── build.ps1              # Build automation script
-└── README.md              # This file
-```
 
 ## Contributing
 

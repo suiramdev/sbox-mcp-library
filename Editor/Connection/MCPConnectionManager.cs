@@ -2,9 +2,6 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Editor;
-using Sandbox;
-using SandboxModelContextProtocol.Editor.Connection.Models;
 using SandboxModelContextProtocol.Editor.Tools;
 using SandboxModelContextProtocol.Editor.Tools.Models;
 

@@ -1,4 +1,3 @@
-using Editor;
 using SandboxModelContextProtocol.Editor.Connection;
 using SandboxModelContextProtocol.Editor.UI.Widgets;
 

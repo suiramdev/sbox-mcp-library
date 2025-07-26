@@ -1,5 +1,3 @@
-using Editor;
-using Sandbox;
 using SandboxModelContextProtocol.Editor.Connection;
 
 namespace SandboxModelContextProtocol.Editor.UI.Widgets;

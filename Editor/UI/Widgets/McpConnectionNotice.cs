@@ -1,7 +1,4 @@
 using System;
-using System.Linq;
-using Sandbox;
-using Editor;
 using SandboxModelContextProtocol.Editor.Connection;
 using SandboxModelContextProtocol.Editor.Connection.Models;
 
