@@ -40,11 +40,12 @@ public class GameObjectTool
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetAllGameObjects( string? sceneId = null )
+	public static JsonArray GetAllGameObjects( string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
 		var gameObjects = scene.GetAllObjects( false );
-		return new JsonObject( gameObjects.SelectMany( go => go.Serialize() ) );
+
+		return new JsonArray( gameObjects.Select( go => go.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
@@ -55,7 +56,11 @@ public class GameObjectTool
 		GameObject? parent = null;
 		if ( parentId != null )
 		{
-			parent = GetGameObjectById( new Guid( parentId ), scene );
+			if ( !Guid.TryParse( parentId, out Guid parsedParentId ) )
+			{
+				throw new InvalidOperationException( $"Invalid parent ID format: {parentId}" );
+			}
+			parent = GetGameObjectById( parsedParentId, scene );
 		}
 
 		var gameObject = scene.CreateObject();
@@ -191,13 +196,12 @@ public class GameObjectTool
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetGameObjectChildren( string id, string? sceneId = null )
+	public static JsonArray GetGameObjectChildren( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
-
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
-		return new JsonObject( gameObject.Children.SelectMany( go => go.Serialize() ) );
+		return new JsonArray( gameObject.Children.Select( c => c.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
@@ -205,7 +209,12 @@ public class GameObjectTool
 	{
 		var scene = GetSceneOrActive( sceneId );
 
-		var gameObject = GetGameObjectById( new Guid( id ), scene );
+		if ( !Guid.TryParse( id, out Guid parsedId ) )
+		{
+			throw new InvalidOperationException( $"Invalid ID format: {id}" );
+		}
+
+		var gameObject = GetGameObjectById( parsedId, scene );
 		if ( gameObject.Parent == null )
 		{
 			return new JsonObject( null );
@@ -244,20 +253,52 @@ public class GameObjectTool
 	public static JsonObject AddGameObjectComponent( string id, string componentType, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
-
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
-		var typeDescription = TypeLibrary.GetTypes()
+		// Try multiple component type resolution strategies
+		TypeDescription? typeDescription = null;
+
+		// Strategy 1: Exact name match
+		typeDescription = TypeLibrary.GetTypes()
 			.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
-			.Where( t => t.Name == componentType )
-			.FirstOrDefault();
+			.FirstOrDefault( t => t.Name == componentType );
 
-		var type = typeDescription?.TargetType ?? throw new InvalidOperationException( $"Component type {componentType} not found" );
+		// Strategy 2: Try without namespace prefix
+		if ( typeDescription == null && componentType.Contains( '.' ) )
+		{
+			string shortName = componentType.Split( '.' ).Last();
+			typeDescription = TypeLibrary.GetTypes()
+				.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
+				.FirstOrDefault( t => t.Name == shortName || t.TargetType.Name == shortName );
+		}
 
-		var addComponentMethod = typeof( GameObject ).GetMethod( "AddComponent", [typeof( bool )] ) ?? throw new InvalidOperationException( "AddComponent method not found" );
+		// Strategy 3: Try with Sandbox prefix
+		if ( typeDescription == null && !componentType.StartsWith( "Sandbox." ) )
+		{
+			typeDescription = TypeLibrary.GetTypes()
+				.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
+				.FirstOrDefault( t => t.Name == $"Sandbox.{componentType}" );
+		}
+
+		if ( typeDescription == null )
+		{
+			var availableTypes = TypeLibrary.GetTypes()
+				.Where( t => t.TargetType.IsAssignableTo( typeof( Component ) ) )
+				.Select( t => t.Name )
+				.ToList();
+
+			throw new InvalidOperationException(
+				$"Component type '{componentType}' not found. Available types include: {string.Join( ", ", availableTypes )}" );
+		}
+
+		var type = typeDescription.TargetType;
+		var addComponentMethod = typeof( GameObject ).GetMethod( "AddComponent", [typeof( bool )] );
+		if ( addComponentMethod == null )
+		{
+			throw new InvalidOperationException( "AddComponent method not found" );
+		}
 
 		var genericMethod = addComponentMethod.MakeGenericMethod( type );
-
 		genericMethod.Invoke( gameObject, [true] );
 
 		return gameObject.Serialize();
@@ -270,19 +311,31 @@ public class GameObjectTool
 
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
-		gameObject.Components.GetAll().FirstOrDefault( c => c.GetType().Name == componentType )?.Destroy();
+		// Try multiple component type matching strategies
+		var component = gameObject.Components.GetAll().FirstOrDefault( c =>
+			c.GetType().Name == componentType ||
+			c.GetType().FullName == componentType ||
+			c.GetType().Name == componentType.Split( '.' ).Last() ||
+			c.GetType().FullName?.EndsWith( $".{componentType}" ) == true
+		);
+
+		if ( component == null )
+		{
+			throw new InvalidOperationException( $"Component '{componentType}' not found on GameObject '{gameObject.Name}'" );
+		}
+
+		component.Destroy();
 
 		return gameObject.Serialize();
 	}
 
 	[McpEditorTool]
-	public static JsonObject GetGameObjectComponents( string id, string? sceneId = null )
+	public static JsonArray GetGameObjectComponents( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
-
 		var gameObject = GetGameObjectById( new Guid( id ), scene );
 
-		return new JsonObject( gameObject.Components.GetAll().SelectMany( c => (JsonObject)c.Serialize() ) );
+		return new JsonArray( gameObject.Components.GetAll().Select( c => c.Serialize() ).ToArray() );
 	}
 
 	[McpEditorTool]
@@ -329,13 +382,33 @@ public class GameObjectTool
 		if ( sceneId == null )
 			return SceneEditorSession.Active.Scene ?? throw new InvalidOperationException( "No active scene found" );
 
-		var scene = SceneEditorSession.All.FirstOrDefault( s => s.Scene.Id == new Guid( sceneId ) )?.Scene;
-		return scene ?? throw new InvalidOperationException( $"Scene with id {sceneId} not found" );
+		// Try to parse as GUID first
+		if ( Guid.TryParse( sceneId, out Guid parsedGuid ) )
+		{
+			var scene = SceneEditorSession.All.FirstOrDefault( s => s.Scene?.Id == parsedGuid )?.Scene;
+			if ( scene != null )
+				return scene;
+		}
+
+		// If not a GUID, try to match by scene name
+		var sceneByName = SceneEditorSession.All.FirstOrDefault( s =>
+			s.Scene?.Name?.Equals( sceneId, StringComparison.OrdinalIgnoreCase ) == true )?.Scene;
+
+		if ( sceneByName != null )
+			return sceneByName;
+
+		// If still not found, return active scene as fallback
+		return SceneEditorSession.Active.Scene ?? throw new InvalidOperationException( $"Scene '{sceneId}' not found and no active scene available" );
 	}
 
 	private static GameObject GetGameObjectById( Guid guid, Scene scene )
 	{
-		return scene.GetAllObjects( false ).FirstOrDefault( go => go.Id == guid )
-			?? throw new InvalidOperationException( $"GameObject with id {guid} not found" );
+		var gameObject = scene.GetAllObjects( false ).FirstOrDefault( go => go.Id == guid );
+		if ( gameObject == null )
+		{
+			throw new InvalidOperationException( $"GameObject with id {guid} not found" );
+		}
+
+		return gameObject;
 	}
 }
