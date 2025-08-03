@@ -1,13 +1,13 @@
 using System;
 using System.Text.Json.Nodes;
-using SandboxModelContextProtocol.Editor.Commands.Attributes;
+using SandboxModelContextProtocol.Editor.Tools.Attributes;
 
 namespace SandboxModelContextProtocol.Editor.Tools;
 
-[McpEditorToolType]
+[McpToolType]
 public class GameObjectTool
 {
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject GetGameObjectByName( string name, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -21,7 +21,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject GetGameObjectById( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -35,7 +35,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonArray GetAllGameObjects( string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -44,7 +44,7 @@ public class GameObjectTool
 		return new JsonArray( gameObjects.Select( go => go.Serialize() ).ToArray() );
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject CreateGameObject( string name, string sceneId, string? parentId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -66,7 +66,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject DuplicateGameObject( string id, string? sceneId = null, string? parentId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -87,7 +87,7 @@ public class GameObjectTool
 		return duplicate.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static bool DestroyGameObject( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -100,7 +100,7 @@ public class GameObjectTool
 	}
 
 	// Transform Commands
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectWorldPosition( string id, float x, float y, float z, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -112,7 +112,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectWorldRotation( string id, float x, float y, float z, float w, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -124,7 +124,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectWorldScale( string id, float x, float y, float z, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -136,7 +136,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectLocalPosition( string id, float x, float y, float z, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -148,7 +148,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectLocalRotation( string id, float x, float y, float z, float w, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -160,7 +160,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectLocalScale( string id, float x, float y, float z, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -173,7 +173,7 @@ public class GameObjectTool
 	}
 
 	// Hierarchy Commands
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectParent( string id, string? parentId, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -191,7 +191,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonArray GetGameObjectChildren( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -200,7 +200,7 @@ public class GameObjectTool
 		return new JsonArray( gameObject.Children.Select( c => c.Serialize() ).ToArray() );
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject GetGameObjectParent( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -220,7 +220,7 @@ public class GameObjectTool
 	}
 
 	// Property Commands
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectName( string id, string name, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -232,7 +232,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectEnabled( string id, bool enabled, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -245,7 +245,7 @@ public class GameObjectTool
 	}
 
 	// Component Commands
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject AddGameObjectComponent( string id, string componentType, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -300,7 +300,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject RemoveGameObjectComponent( string id, string componentType, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -325,7 +325,7 @@ public class GameObjectTool
 		return gameObject.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonArray GetGameObjectComponents( string id, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -334,7 +334,7 @@ public class GameObjectTool
 		return new JsonArray( gameObject.Components.GetAll().Select( c => c.Serialize() ).ToArray() );
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject GetGameObjectComponent( string id, string componentType, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
@@ -350,7 +350,7 @@ public class GameObjectTool
 		return (JsonObject)component.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject SetGameObjectComponentProperty( string id, string componentType, string propertyName, JsonNode value, string? sceneId = null )
 	{
 		var scene = GetSceneOrActive( sceneId );
