@@ -22,26 +22,23 @@ This adapter library works in conjunction with the separate [MCP Server](https:/
 
 ### Step 1: Install and Run the MCP Server
 
-Before using this adapter library, you must first install and run the MCP Server:
+Before using this adapter library, make sure the MCP Server is properly installed and running. This server acts as an API that enables your AI assistant to communicate with the library:
 
-1. **Install the MCP Server** from the [sbox-mcp-server repository](https://github.com/suiramdev/sbox-mcp-server)
-2. **Follow the setup instructions** in the MCP Server repository to:
-   - Build and run the server
-   - Configure your AI assistant
-3. **Ensure the server is running** before proceeding to the next step
-
-> [!IMPORTANT]
-> The MCP Server must be running for this adapter library to function. Please refer to the [MCP Server documentation](https://github.com/suiramdev/sbox-mcp-server) for detailed installation and configuration instructions.
+1. **Download and set up the MCP Server** by following the detailed installation and configuration steps in the [sbox-mcp-server repository](https://github.com/suiramdev/sbox-mcp-server).
 
 ### Step 2: Install the Adapter Library in s&box
 
-Once the MCP Server is running:
-
 1. **Install this library** in your s&box project through the **Asset Library**. [Find it on asset.party](https://sbox.game/sdv/modelcontextprotocol)
+
+Once the MCP Server is running:
 
 2. **Navigate to MCP → Connect to MCP Server** in the s&box editor menu bar.
 
 3. **Listen for the connection confirmation**: You'll hear a success sound and see a success message in the console when connected.
+
+> [!IMPORTANT]
+> The MCP Server must be running for this adapter library to function. Please refer to the [MCP Server documentation](https://github.com/suiramdev/sbox-mcp-server) for detailed installation and configuration instructions.
+
 
 ## Usage
 
@@ -54,21 +51,6 @@ Once both the MCP Server and this adapter library are installed and connected, y
 "Remove the Rigidbody component from the Ball object"
 "Show me all components attached to the Ground object"
 ```
-
-## Troubleshooting
-
-### Connection Issues
-
-If the **Connect to MCP Server** button fails:
-
-1. **Verify the MCP Server is running** - Check the [MCP Server repository](https://github.com/suiramdev/sbox-mcp-server) for troubleshooting steps
-2. **Review the s&box console** for error messages
-
-### Testing the Connection
-
-You can manually test if the MCP Server is accessible by:
-- Using [Postman](https://www.postman.com/downloads/) or similar API clients to send requests to the server
-- Checking the MCP Server console output for connection attempts
 
 ## Architecture
 
