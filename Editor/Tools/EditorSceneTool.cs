@@ -1,14 +1,14 @@
 using System;
 using System.Text.Json.Nodes;
 using System.Threading.Tasks;
-using SandboxModelContextProtocol.Editor.Commands.Attributes;
+using SandboxModelContextProtocol.Editor.Tools.Attributes;
 
 namespace SandboxModelContextProtocol.Editor.Tools;
 
-[McpEditorToolType]
+[McpToolType]
 public class EditorSceneTool
 {
-	[McpEditorTool]
+	[McpTool]
 	public static JsonObject GetActiveEditorScene()
 	{
 		Scene? scene = SceneEditorSession.Active.Scene;
@@ -20,7 +20,7 @@ public class EditorSceneTool
 		return scene.Serialize();
 	}
 
-	[McpEditorTool]
+	[McpTool]
 	public static async Task LoadEditorSceneFromPath( string path )
 	{
 		// Validate input
@@ -64,35 +64,5 @@ public class EditorSceneTool
 		{
 			throw new InvalidOperationException( $"Failed to load scene from '{path}': {ex.Message}", ex );
 		}
-	}
-
-	[McpEditorTool]
-	public static void SaveAllEditorSessions()
-	{
-		EditorScene.SaveAllSessions();
-	}
-
-	[McpEditorTool]
-	public static void SaveActiveEditorSession()
-	{
-		EditorScene.SaveSession();
-	}
-
-	[McpEditorTool]
-	public static JsonArray GetAllEditorSessions()
-	{
-		return new JsonArray( SceneEditorSession.All.Select( s => s.Scene.Serialize() ).ToArray() );
-	}
-
-	[McpEditorTool]
-	public static JsonObject GetActiveEditorSession()
-	{
-		var activeSession = SceneEditorSession.Active;
-		if ( activeSession?.Scene == null )
-		{
-			throw new InvalidOperationException( "No active editor session found" );
-		}
-
-		return activeSession.Scene.Serialize();
 	}
 }

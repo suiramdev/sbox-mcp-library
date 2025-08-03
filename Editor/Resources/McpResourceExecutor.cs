@@ -2,58 +2,58 @@ using System;
 using System.Reflection;
 using System.Text.Json;
 using System.Threading.Tasks;
-using SandboxModelContextProtocol.Editor.Tools.Attributes;
-using SandboxModelContextProtocol.Editor.Tools.Models;
+using SandboxModelContextProtocol.Editor.Resources.Attributes;
+using SandboxModelContextProtocol.Editor.Resources.Models;
 
-namespace SandboxModelContextProtocol.Editor.Tools;
+namespace SandboxModelContextProtocol.Editor.Resources;
 
-public static class McpToolExecutor
+public static class McpResourceExecutor
 {
-	private static readonly Dictionary<string, MethodInfo> _toolMethods = [];
+	private static readonly Dictionary<string, MethodInfo> _resourceMethods = [];
 	private static bool _initialized = false;
 
-	static McpToolExecutor()
+	static McpResourceExecutor()
 	{
-		// Initialize tools on startup
-		InitializeTools();
+		// Initialize resources on startup
+		InitializeResources();
 	}
 
 	[EditorEvent.Hotload]
 	internal static void OnHotload()
 	{
-		// Reinitialize tools when hotloading
-		InitializeTools();
+		// Reinitialize resources when hotloading
+		InitializeResources();
 	}
 
-	public static async Task<CallToolResponse> CallTool( CallToolRequest request )
+	public static async Task<CallResourceResponse> CallResource( CallResourceRequest request )
 	{
 		try
 		{
-			// Ensure tools are initialized
+			// Ensure resources are initialized
 			if ( !_initialized )
 			{
-				Log.Info( "Initializing tools" );
-				InitializeTools();
+				Log.Info( "Initializing resources" );
+				InitializeResources();
 			}
 
-			Log.Info( $"Calling tool: {request.Name}" );
+			Log.Info( $"Calling resource: {request.Name}" );
 
-			// Find the tool method
-			if ( !_toolMethods.TryGetValue( request.Name, out MethodInfo? method ) || method is null )
+			// Find the resource method
+			if ( !_resourceMethods.TryGetValue( request.Name, out MethodInfo? method ) || method is null )
 			{
-				Log.Warning( $"Tool not found: {request.Name}" );
-				return new CallToolResponse()
+				Log.Warning( $"Resource not found: {request.Name}" );
+				return new CallResourceResponse()
 				{
 					Id = request.Id,
 					Name = request.Name,
-					Content = [JsonSerializer.SerializeToElement( $"Tool '{request.Name}' not found" )],
+					Content = [JsonSerializer.SerializeToElement( $"Resource '{request.Name}' not found" )],
 					IsError = true,
 				};
 			}
 
 			var result = await ExecuteOnMainThread( method, request );
 
-			return new CallToolResponse()
+			return new CallResourceResponse()
 			{
 				Id = request.Id,
 				Name = request.Name,
@@ -63,18 +63,18 @@ public static class McpToolExecutor
 		}
 		catch ( Exception ex )
 		{
-			Log.Warning( $"Error executing tool '{request.Name}': {ex.InnerException?.Message ?? ex.Message}" );
-			return new CallToolResponse()
+			Log.Warning( $"Error executing resource '{request.Name}': {ex.InnerException?.Message ?? ex.Message}" );
+			return new CallResourceResponse()
 			{
 				Id = request.Id,
 				Name = request.Name,
-				Content = [JsonSerializer.SerializeToElement( $"Error executing tool '{request.Name}': {ex.InnerException?.Message ?? ex.Message}" )],
+				Content = [JsonSerializer.SerializeToElement( $"Error executing resource '{request.Name}': {ex.InnerException?.Message ?? ex.Message}" )],
 				IsError = true,
 			};
 		}
 	}
 
-	private static async Task<object?> ExecuteOnMainThread( MethodInfo method, CallToolRequest request )
+	private static async Task<object?> ExecuteOnMainThread( MethodInfo method, CallResourceRequest request )
 	{
 		var tcs = new TaskCompletionSource<object?>();
 
@@ -143,9 +143,9 @@ public static class McpToolExecutor
 		return await tcs.Task;
 	}
 
-	private static void InitializeTools()
+	private static void InitializeResources()
 	{
-		_toolMethods.Clear();
+		_resourceMethods.Clear();
 
 		try
 		{
@@ -156,23 +156,23 @@ public static class McpToolExecutor
 			{
 				try
 				{
-					// Find all types with McpEditorToolTypeAttribute
-					Type[] toolTypes = [.. assembly.GetTypes().Where( t => t.GetCustomAttribute<McpToolTypeAttribute>() != null )];
+					// Find all types with McpResourceTypeAttribute
+					Type[] resourceTypes = [.. assembly.GetTypes().Where( t => t.GetCustomAttribute<McpResourceTypeAttribute>() != null )];
 
-					foreach ( Type toolType in toolTypes )
+					foreach ( Type resourceType in resourceTypes )
 					{
-						// Find all methods with McpEditorToolAttribute
-						MethodInfo[] toolMethods = [.. toolType.GetMethods( BindingFlags.Public | BindingFlags.Static ).Where( m => m.GetCustomAttribute<McpToolAttribute>() != null )];
+						// Find all methods with McpResourceAttribute
+						MethodInfo[] resourceMethods = [.. resourceType.GetMethods( BindingFlags.Public | BindingFlags.Static ).Where( m => m.GetCustomAttribute<McpResourceAttribute>() != null )];
 
-						Log.Info( $"Tool: {toolType.Name} {toolMethods.Length}" );
+						Log.Info( $"Resource: {resourceType.Name} {resourceMethods.Length}" );
 
-						foreach ( MethodInfo method in toolMethods )
+						foreach ( MethodInfo method in resourceMethods )
 						{
-							McpToolAttribute? attribute = method.GetCustomAttribute<McpToolAttribute>();
+							McpResourceAttribute? attribute = method.GetCustomAttribute<McpResourceAttribute>();
 							if ( attribute != null )
 							{
-								string toolName = attribute.GetToolName( method.Name );
-								_toolMethods[toolName] = method;
+								string resourceName = attribute.GetResourceName( method.Name );
+								_resourceMethods[resourceName] = method;
 							}
 						}
 					}
@@ -188,7 +188,7 @@ public static class McpToolExecutor
 		}
 		catch ( Exception ex )
 		{
-			Log.Error( $"Error initializing MCP tools: {ex.Message}" );
+			Log.Error( $"Error initializing MCP resources: {ex.Message}" );
 			_initialized = false;
 		}
 	}
