@@ -1,10 +1,9 @@
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SandboxModelContextProtocol.Editor.Tools.Models;
+namespace SandboxModelContextProtocol.Editor.Resources.Models;
 
-public class CallEditorToolRequest
+public class CallResourceRequest
 {
 	[JsonPropertyName( "id" )]
 	public required string Id { get; init; }

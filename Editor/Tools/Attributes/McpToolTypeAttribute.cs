@@ -1,12 +1,12 @@
 using System;
 
-namespace SandboxModelContextProtocol.Editor.Commands.Attributes;
+namespace SandboxModelContextProtocol.Editor.Tools.Attributes;
 
 /// <summary>
-/// Attribute that marks a class as an MCP editor tool type.
+/// Attribute that marks a class as an MCP tool type.
 /// </summary>
 [AttributeUsage( AttributeTargets.Class )]
-public class McpEditorToolTypeAttribute : Attribute
+public class McpToolTypeAttribute : Attribute
 {
 	/// <summary>
 	/// Gets the tool type name. If not specified, the class name will be used.
@@ -19,30 +19,30 @@ public class McpEditorToolTypeAttribute : Attribute
 	public string? ToolTypeDescription { get; }
 
 	/// <summary>
-	/// Initializes a new instance of the McpEditorToolTypeAttribute with automatic tool type name from class name.
+	/// Initializes a new instance of the McpToolTypeAttribute with automatic tool type name from class name.
 	/// </summary>
-	public McpEditorToolTypeAttribute()
+	public McpToolTypeAttribute()
 	{
 		ToolTypeName = null;
 		ToolTypeDescription = null;
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the McpEditorToolTypeAttribute with a custom tool type name.
+	/// Initializes a new instance of the McpToolTypeAttribute with a custom tool type name.
 	/// </summary>
 	/// <param name="toolTypeName">The custom tool type name to use instead of the class name</param>
-	public McpEditorToolTypeAttribute( string toolTypeName )
+	public McpToolTypeAttribute( string toolTypeName )
 	{
 		ToolTypeName = toolTypeName;
 		ToolTypeDescription = null;
 	}
 
 	/// <summary>
-	/// Initializes a new instance of the McpEditorToolTypeAttribute with a custom tool type name and description.
+	/// Initializes a new instance of the McpToolTypeAttribute with a custom tool type name and description.
 	/// </summary>
 	/// <param name="toolTypeName">The custom tool type name to use instead of the class name</param>
 	/// <param name="toolTypeDescription">The description of the tool type</param>
-	public McpEditorToolTypeAttribute( string toolTypeName, string toolTypeDescription )
+	public McpToolTypeAttribute( string toolTypeName, string toolTypeDescription )
 	{
 		ToolTypeName = toolTypeName;
 		ToolTypeDescription = toolTypeDescription;

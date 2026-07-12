@@ -2,8 +2,6 @@ using System;
 using System.Text.Json;
 using System.Threading;
 using System.Threading.Tasks;
-using Editor;
-using Sandbox;
 using SandboxModelContextProtocol.Editor.Connection.Models;
 using SandboxModelContextProtocol.Editor.Tools;
 using SandboxModelContextProtocol.Editor.Tools.Models;
@@ -110,14 +108,35 @@ public static class McpConnectionManager
 
 			try
 			{
-				CallEditorToolRequest? request = JsonSerializer.Deserialize<CallEditorToolRequest>( message );
+				CallRequest? request = JsonSerializer.Deserialize<CallRequest>( message );
 				if ( request == null )
 				{
 					return;
 				}
 
-				CallEditorToolResponse? response = await McpToolExecutor.CallEditorTool( request );
-				await Send( JsonSerializer.Serialize( response ) );
+				if ( request.Type == "tool" )
+				{
+					CallToolRequest? toolRequest = JsonSerializer.Deserialize<CallToolRequest>( message );
+					if ( toolRequest == null )
+					{
+						return;
+					}
+
+					CallToolResponse? response = await McpToolExecutor.CallTool( toolRequest );
+					await Send( JsonSerializer.Serialize( response ) );
+				}
+
+				if ( request.Type == "tool" )
+				{
+					CallToolRequest? toolRequest = JsonSerializer.Deserialize<CallToolRequest>( message );
+					if ( toolRequest == null )
+					{
+						return;
+					}
+
+					CallToolResponse? response = await McpToolExecutor.CallTool( toolRequest );
+					await Send( JsonSerializer.Serialize( response ) );
+				}
 			}
 			catch ( Exception ex )
 			{

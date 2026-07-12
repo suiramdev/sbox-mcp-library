@@ -1,14 +1,16 @@
 using System;
-using System.Collections.Generic;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace SandboxModelContextProtocol.Server.Services.Models;
+namespace SandboxModelContextProtocol.Editor.Connection.Models;
 
-public class CallEditorToolRequest
+public class CallRequest
 {
 	[JsonPropertyName( "id" )]
-	public string Id { get; set; } = Guid.NewGuid().ToString();
+	public string Id { get; init; } = Guid.NewGuid().ToString();
+
+	[JsonPropertyName( "type" )]
+	public virtual string? Type { get; init; }
 
 	[JsonPropertyName( "name" )]
 	public required string Name { get; init; }

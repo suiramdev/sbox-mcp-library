@@ -26,6 +26,3 @@ code/Properties/*
 
 # Exported / standalone games
 Exports/
-
-# Exclude the Server project
-!Server/modelcontextprotocol.csproj

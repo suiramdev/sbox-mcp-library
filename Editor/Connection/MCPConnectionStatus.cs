@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using SandboxModelContextProtocol.Editor.Connection.Models;
 
 namespace SandboxModelContextProtocol.Editor.Connection;
